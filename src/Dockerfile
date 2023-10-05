@@ -19,4 +19,3 @@ USER $ZEC_USER
 WORKDIR /srv/$ZEC_USER
 
 ENTRYPOINT ["zcashd"]
-CMD ["--help"]
