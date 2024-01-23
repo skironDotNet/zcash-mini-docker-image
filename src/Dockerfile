@@ -4,20 +4,19 @@ RUN apt update && apt install -y ca-certificates
 
 # build in separte temporary container
 FROM base AS build
+
+ARG GIT_TAG
 WORKDIR /
+
 # install needed tools
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 RUN apt-get install -y wget git make jq curl binutils build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python3 python3-zmq zlib1g-dev curl bsdmainutils automake libtinfo5
 
-# check latest zcash build tag
-ARG ZEC_TAG=''
-RUN ZEC_TAG=$(curl -sL https://api.github.com/repos/zcash/zcash/releases/latest | jq -r ".tag_name")
-
 RUN git clone --progress https://github.com/zcash/zcash.git
 
 # checkout previously discovered latest tag and use that source code
-RUN cd /zcash && git checkout -b buildtag $ZEC_TAG
+RUN cd /zcash && git checkout -b buildtag $GIT_TAG
 RUN /zcash/zcutil/build.sh -j$(nproc) 
 
 # strip built binaries to minimize the size
