@@ -1,14 +1,38 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 AS base
 
-RUN apt update && apt install -y ca-certificates && apt clean command
+RUN apt update && apt install -y ca-certificates
 
-ADD output/zcashd /usr/local/bin/
+# build in separte temporary container
+FROM base AS build
+WORKDIR /
+# install needed tools
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+RUN apt-get install -y wget git make jq curl binutils build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python3 python3-zmq zlib1g-dev curl bsdmainutils automake libtinfo5
 
-RUN mkdir -p /srv/.zcash && chown 2001:2001 /srv/.zcash
-RUN mkdir -p /srv/.zcash-params && chown 2001:2001 /srv/.zcash-params
+# check latest zcash build tag
+ARG ZEC_TAG=''
+RUN ZEC_TAG=$(curl -sL https://api.github.com/repos/zcash/zcash/releases/latest | jq -r ".tag_name")
+
+RUN git clone --progress https://github.com/zcash/zcash.git
+
+# checkout previously discovered latest tag and use that source code
+RUN cd /zcash && git checkout -b buildtag $ZEC_TAG
+RUN /zcash/zcutil/build.sh -j$(nproc) 
+
+# strip built binaries to minimize the size
+RUN cd /zcash/src && strip zcashd && strip zcash-cli
+
+# build final minimal docker image
+FROM base AS final
+
+RUN apt clean command
 
 ARG ZEC_USER=zcashd
 ARG ZEC_UID=2001
+
+RUN mkdir -p /srv/.zcash && chown $ZEC_UID:$ZEC_UID /srv/.zcash
+RUN mkdir -p /srv/.zcash-params && chown $ZEC_UID:$ZEC_UID /srv/.zcash-params
 
 RUN useradd --home-dir /srv/$ZEC_USER \
             --shell /bin/bash \
@@ -16,6 +40,9 @@ RUN useradd --home-dir /srv/$ZEC_USER \
             --uid $ZEC_UID\
             $ZEC_USER
 USER $ZEC_USER
-WORKDIR /srv/$ZEC_USER
 
-ENTRYPOINT ["zcashd"]
+WORKDIR /srv/$ZEC_USER
+COPY --from=build /zcash/src/zcashd /usr/local/bin/
+COPY --from=build /zcash/src/zcash-cli /usr/local/bin/
+
+CMD ["zcashd"]
