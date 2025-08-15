@@ -11,7 +11,7 @@ WORKDIR /
 # install needed tools
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-RUN apt-get install -y wget git make jq curl binutils build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python3 python3-zmq zlib1g-dev curl bsdmainutils automake libtinfo5
+RUN apt update && apt-get install -y wget git make jq curl binutils build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python3 python3-zmq zlib1g-dev curl bsdmainutils automake libtinfo5
 
 RUN git clone --progress https://github.com/zcash/zcash.git
 
