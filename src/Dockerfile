@@ -20,7 +20,7 @@ RUN cd /zcash && git checkout -b buildtag $GIT_TAG
 RUN /zcash/zcutil/build.sh -j$(nproc) 
 
 # strip built binaries to minimize the size
-RUN cd /zcash/src && strip zcashd && strip zcash-cli
+RUN cd /zcash/src && strip zcashd && strip zcash-cli && strip zcashd-wallet-tool
 
 # build final minimal docker image
 FROM base AS final
