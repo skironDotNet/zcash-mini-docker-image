@@ -43,5 +43,6 @@ USER $ZEC_USER
 WORKDIR /srv/$ZEC_USER
 COPY --from=build /zcash/src/zcashd /usr/local/bin/
 COPY --from=build /zcash/src/zcash-cli /usr/local/bin/
+COPY --from=build /zcash/src/zcashd-wallet-tool /usr/local/bin/
 
 CMD ["zcashd"]
